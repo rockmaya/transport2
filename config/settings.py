@@ -152,10 +152,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #     }
 # }
 
-import dj_database_url
-
 DATABASES = {
-    "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'transport_db_btcv',
+        'USER': 'transport_db_btcv_user',
+        'PASSWORD': '5PiLv1ljxkTjMlu1WE2wo4n07Evz0Ebj',
+        'HOST': 'dpg-d2ustvndiees739b7s70-a',
+        'PORT': '5432',
+    }
 }
 
 
