@@ -34,12 +34,13 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 import os
 
-DEBUG = False
+DEBUG = int(os.environ.get("DEBUG", default=1))
+
 
 
 import os
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
 
 
