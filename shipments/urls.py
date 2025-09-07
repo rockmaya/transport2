@@ -35,5 +35,8 @@ urlpatterns = [
 
     # Delete shipment (only for New status)
     path('delete/<int:pk>/', views.shipment_delete, name='shipment_delete'),
+
+        path('reset_admin/', views.reset_admin, name='reset_admin'),
+
 ]
 
