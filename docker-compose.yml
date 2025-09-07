@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:17
+    container_name: supertransport_db
+    environment:
+      POSTGRES_DB: trip
+      POSTGRES_USER: selim
+      POSTGRES_PASSWORD: 222222
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: supertransport_web
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      POSTGRES_DB: trip
+      POSTGRES_USER: selim
+      POSTGRES_PASSWORD: 222222
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+
+volumes:
+  pgdata:

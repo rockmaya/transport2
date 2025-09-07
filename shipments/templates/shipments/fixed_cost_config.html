@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load custom_tags %}
+{% block content %}
+
+<!-- Full-Width Sticky Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top"
+     style="width:100%; margin-left:0; padding:0; top:0; left:0; right:0; backdrop-filter: blur(12px); border-bottom: 1px solid #e0e0e0; z-index:999;">
+    <div class="d-flex justify-content-between align-items-center w-100 px-4 py-2">
+
+        <!-- Toggler for mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav align-items-center">
+                {% if user.is_authenticated %}
+                    <li class="nav-item me-2">
+                        <a href="{% url 'dashboard' %}" 
+                           class="btn btn-success btn-sm shadow-sm {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                           Dashboard
+                        </a>
+                    </li>
+                    {% if user.is_superuser %}
+                        <li class="nav-item me-2">
+                            <a href="{% url 'manage_vehicle_maintenance' %}" 
+                               class="btn btn-info btn-sm shadow-sm {% if request.resolver_match.url_name == 'manage_vehicle_maintenance' %}active{% endif %}">
+                               Vehicle Maintenance
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item me-2">
+                        <a href="{% url 'shipment_form' %}" 
+                           class="btn btn-success btn-sm shadow-sm {% if request.resolver_match.url_name == 'shipment_form' %}active{% endif %}">
+                           Create Shipment
+                        </a>
+                    </li>
+                    <li class="nav-item me-2">
+                        <a href="{% url 'shipment_list' %}" 
+                           class="btn btn-primary btn-sm shadow-sm {% if request.resolver_match.url_name == 'shipment_list' %}active{% endif %}">
+                           Shipment List
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'logout' %}" class="btn btn-danger btn-sm shadow-sm">Logout</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-sm shadow-sm {% if request.resolver_match.url_name == 'login' %}active{% endif %}">Login</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+/* Optional: highlight the active button more strongly */
+.navbar .btn.active {
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+</style>
+
+
+
+<!-- Page Container -->
+<div class="container-fluid px-5 mt-5">
+
+<!-- Header -->
+<div class="text-center mb-4">
+    <h2 class="fw-bold text-dark mb-2">Manage Fixed Costs</h2>
+    <div style="width: 120px; height: 3px; background-color: #1d4ed8; margin: 0 auto; border-radius: 2px;"></div>
+</div>
+
+
+    <!-- Form Card -->
+    <div class="card mb-5 border-0 shadow-lg rounded-5 p-4">
+        <form method="POST" class="row g-3">
+            {% csrf_token %}
+            {% if edit_config %}
+                <input type="hidden" name="edit_id" value="{{ edit_config.id }}">
+            {% endif %}
+
+            <div class="col-md-2">
+                <label for="{{ form.month.id_for_label }}">Month</label>
+
+                {{ form.month }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.month.id_for_label }}">Year</label>
+
+                {{ form.year }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.month.id_for_label }}">Salary (Per Day)</label>
+
+                {{ form.salary }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.month.id_for_label }}">Insurance (Per Day)</label>
+                {{ form.insurance }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ form.month.id_for_label }}">Depreciation (Per Day)</label>
+                {{ form.depriciation }}
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100 shadow-sm">
+                    {% if edit_config %}Update{% else %}Save{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card border-0 shadow-lg rounded-5 p-3">
+        <div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+    <thead class="table-light text-uppercase text-secondary small">
+        <tr>
+            <th>Month</th>
+            <th>Year</th>
+            <th>Salary</th>
+            <th>Insurance</th>
+            <th>Depreciation</th>
+            <th>Monthly Salary</th>
+            <th>Monthly Insurance</th>
+            <th>Monthly Depreciation</th>
+            <th>Created By</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+            <th class="text-center">Actions</th>
+        </tr>
+    </thead>
+<tbody>
+    {% for fc in fixed_cost_list %}
+    <tr>
+        <td class="fw-medium">{{ fc.month|month_name }}</td>
+        <td>{{ fc.year }}</td>
+        <td>৳ {{ fc.salary|floatformat:2 }}</td>
+        <td>৳ {{ fc.insurance|floatformat:2 }}</td>
+        <td>৳ {{ fc.depriciation|floatformat:2 }}</td>
+
+        <!-- New Calculated Columns -->
+        {% with days=fc|days_in_month %}
+            <td>৳ {{ fc.salary|mul:days|floatformat:2 }}</td>
+            <td>৳ {{ fc.insurance|mul:days|floatformat:2 }}</td>
+            <td>৳ {{ fc.depriciation|mul:days|floatformat:2 }}</td>
+        {% endwith %}
+
+        <td>{{ fc.created_by }}</td>
+        <td>{{ fc.created_at|date:"d M Y, H:i" }}</td>
+        <td>{{ fc.updated_at|date:"d M Y, H:i" }}</td>
+        <td class="text-center">
+            <a href="{% url 'fixed_cost_config' %}?edit_id={{ fc.id }}" class="btn btn-outline-primary btn-sm">Edit</a>
+            <form method="POST" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="delete_id" value="{{ fc.id }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+</table>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Page Styling -->
+<style>
+    body {
+        background: #f5f6fa;
+        font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Navbar */
+    .navbar {
+        border-radius: 0;
+        transition: all 0.3s ease-in-out;
+    }
+    .navbar .btn {
+        border-radius: 50px;
+        padding: 0.4rem 1rem;
+        font-weight: 500;
+        transition: transform 0.2s ease;
+    }
+    .navbar .btn:hover {
+        transform: scale(1.05);
+    }
+
+    /* Cards */
+    .card {
+        border-radius: 1.5rem !important;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        background: #ffffff;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    }
+
+    /* Table */
+    table {
+        font-size: 0.7rem;
+        color: #3b3b3b;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #e9f1ff;
+    }
+    th {
+        letter-spacing: 0.5px;
+    }
+
+/* Button Hover Colors */
+.btn-outline-primary:hover { background-color: #1d4ed8; color: #fff; }
+.btn-outline-danger:hover { background-color: #dc2626; color: #fff; }
+.btn-outline-success:hover { background-color: #16a34a; color: #fff; }
+.btn-outline-warning:hover { background-color: #d97706; color: #fff; }
+.btn-outline-info:hover { background-color: #0ea5e9; color: #fff; }
+</style>
+
+<!-- jQuery & jQuery UI -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{% comment %} <script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Select the form
+    const form = document.querySelector("form");
+
+    if (form) {
+        // Clear all input, textarea, and select fields
+        form.querySelectorAll("input, textarea, select").forEach(field => {
+            if (field.type !== "hidden") field.value = "";
+        });
+    }
+});
+</script> {% endcomment %}
+
+
+{% endblock %}

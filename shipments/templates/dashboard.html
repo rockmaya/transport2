@@ -1,0 +1,366 @@
+{% load static %}
+{% load custom_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; margin: 0; padding: 0; }
+        nav { position: sticky; top: 0; z-index: 999; background: #fff; padding: 12px 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-bottom:1px solid #e0e0e0;}
+        nav a.btn { font-weight:500; border-radius:8px; transition: all 0.2s ease-in-out;}
+        nav a.btn:hover { transform: translateY(-2px); }
+        h3.page-title { text-align:center; font-size:2rem; font-weight:700; margin-bottom:30px; position:relative;}
+        h3.page-title::after { content:''; display:block; width:80px; height:4px; background: linear-gradient(90deg,#4A90E2,#17a2b8); margin:8px auto 0 auto; border-radius:2px; }
+        .card { border-radius:12px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow:0 12px 20px rgba(0,0,0,0.12); }
+        .card h5 { font-size:0.95rem; font-weight:600; color:#555; }
+        .card h3 { font-size:1.6rem; font-weight:700; }
+        canvas { max-height: 320px; }
+        .row.g-3 > .col { display:flex; }
+        .row.g-3 > .col .card { flex:1; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top" 
+     style="width:100%; backdrop-filter: blur(10px); border-bottom: 1px solid #e0e0e0;">
+    <div class="d-flex w-100 align-items-center justify-content-between px-3">
+
+        <!-- Navbar Toggler for mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+<ul class="navbar-nav align-items-center gap-2">
+    {% if user.is_authenticated %}
+        <li class="nav-item">
+            <a href="{% url 'shipment_form' %}" class="btn btn-success btn-sm shadow-sm">Create New Shipment</a>
+        </li>
+        {% if user|in_group:"FixedCostAdmins" %}
+            <li class="nav-item">
+                <a href="{% url 'fixed_cost_config' %}" class="btn btn-warning btn-sm shadow-sm">Manage Fixed Costs</a>
+            </li>
+        {% endif %}
+        {% if user.is_superuser %}
+            <li class="nav-item">
+                <a href="{% url 'manage_vehicle_maintenance' %}" class="btn btn-info btn-sm shadow-sm">Vehicle Maintenance</a>
+            </li>
+        {% endif %}
+        <li class="nav-item">
+            <a href="{% url 'shipment_list' %}" class="btn btn-primary btn-sm shadow-sm">Shipment List</a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'logout' %}" class="btn btn-danger btn-sm shadow-sm">Logout</a>
+        </li>
+    {% else %}
+        <li class="nav-item">
+            <a href="{% url 'login' %}" class="btn btn-primary btn-sm shadow-sm">Login</a>
+        </li>
+    {% endif %}
+</ul>
+
+        </div>
+    </div>
+</nav>
+
+
+<div class="container mt-5">
+    <h3 class="page-title">Green Super Transport Dashboard</h3>
+
+
+<!-- Sleek Full-Width Date Range Search -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm p-3 mb-4" style="border-radius:12px; background: #fff; border: none;">
+            <form method="get" class="d-flex flex-wrap align-items-end gap-3 justify-content-start">
+                <div class="form-group flex-grow-1 d-flex flex-column">
+                    <label for="from_date" class="form-label fw-bold" style="font-size:0.9rem;">From</label>
+                    <input type="date" id="from_date" name="from_date" class="form-control form-control-sm" value="{{ from_date }}" style="border-radius:8px; border:1px solid #ccc; padding:6px 10px; width:100%;">
+                </div>
+                <div class="form-group flex-grow-1 d-flex flex-column">
+                    <label for="to_date" class="form-label fw-bold" style="font-size:0.9rem;">To</label>
+                    <input type="date" id="to_date" name="to_date" class="form-control form-control-sm" value="{{ to_date }}" style="border-radius:8px; border:1px solid #ccc; padding:6px 10px; width:100%;">
+                </div>
+                <div class="form-group mb-0">
+                    <button type="submit" class="btn btn-primary btn-sm" style="border-radius:8px; padding:6px 20px; background: linear-gradient(135deg, #4A90E2, #17a2b8); border:none; font-weight:600; box-shadow:0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s;">
+                        Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="kpi-card bg-gradient-purple">
+            <h5 class="kpi-title">Total Revenue</h5>
+            <h3>৳ {{ total_revenue|floatformat:2 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="kpi-card bg-gradient-red">
+            <h5 class="kpi-title">Total Cost</h5>
+            <h3>৳ {{ total_cost|floatformat:2 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="kpi-card bg-gradient-green">
+            <h5 class="kpi-title">Total Profit</h5>
+            <h3>৳ {{ total_profit|floatformat:2 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="kpi-card bg-gradient-blue">
+            <h5 class="kpi-title">Avg Profit Margin</h5>
+            <h3>{{ avg_profit_margin }}%</h3>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="kpi-card bg-gradient-teal">
+            <h5 class="kpi-title">Avg Revenue / Trip</h5>
+            <h3>৳ {{ avg_revenue_per_trip|floatformat:2 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-6 mb-3">
+        <div class="kpi-card bg-gradient-orange">
+            <h5 class="kpi-title">Avg Cost / Trip</h5>
+            <h3>৳ {{ avg_cost_per_trip|floatformat:2 }}</h3>
+        </div>
+    </div>
+</div>
+
+<style>
+.kpi-card {
+    border-radius: 12px;
+    color: #fff;
+    padding: 25px 15px;
+    text-align: center;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.kpi-card h5 { font-size: 0.95rem; margin-bottom: 10px; }
+.kpi-card h3 { font-size: 1.8rem; font-weight: 700; }
+.kpi-title {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.12);
+}
+
+/* Colorful Dark Gradients */
+.bg-gradient-purple { background: linear-gradient(135deg, #6a11cb, #2575fc); }
+.bg-gradient-red    { background: linear-gradient(135deg, #c1074bff, #ff4b2b); }
+.bg-gradient-green  { background: linear-gradient(135deg, #039a2bff, #18d745ff); }
+.bg-gradient-blue   { background: linear-gradient(135deg, #1a84e8ff, #0c5cbfff); }
+.bg-gradient-teal   { background: linear-gradient(135deg, #098cc4ff, #055a7eff); }
+.bg-gradient-orange { background: linear-gradient(135deg, #fd9839ff, #d49a07ff); }
+</style>
+
+
+<!-- Charts Row 1 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm p-3">
+            <h5 class="chart-title text-center mb-3">Top Revenue Vehicles</h5>
+            <canvas id="topVehicleChart"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm p-3">
+            <h5 class="chart-title text-center mb-3">Daily Revenue, Cost & Profit</h5>
+            <canvas id="dailyLineChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm p-3">
+            <h5 class="chart-title text-center mb-3">Top 5 Most Profitable Vehicles</h5>
+            <canvas id="topVehicleProfitChart"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm p-3">
+            <h5 class="chart-title text-center mb-3">Profit/Owners</h5>
+            <canvas id="topOwnerProfitChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 3 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm p-3">
+            <h5 class="chart-title text-center mb-3">Cost Breakdown</h5>
+            <canvas id="costBreakdownChart"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm p-3">
+            <h5 class="chart-title text-center mb-3">Profit/Trip</h5>
+            <table class="table table-striped table-sm mb-0">
+                <thead>
+                    <tr><th>Trip No</th><th>Profit (৳)</th></tr>
+                </thead>
+                <tbody>
+                    {% for trip in top_10_trips_by_profit %}
+                    <tr class="{% if trip.profit < 0 %}table-danger{% endif %}">
+                        <td>{{ trip.trip_no }}</td>
+                        <td>{{ trip.profit|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.chart-title {
+    font-weight: 700;
+    text-decoration: underline;
+}
+</style>
+
+    </div>
+</div>
+
+<script>
+    // Redirect on page reload to shipment list
+    if (performance.getEntriesByType("navigation")[0].type === "reload") {
+        window.location.replace("{% url 'dashboard' %}");
+    }
+
+
+    Chart.register(ChartDataLabels);
+
+    const barOptions = {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'end',
+                formatter: (value) => '৳ ' + value.toLocaleString(),
+                font: { weight: 'bold', size: 12 }
+            }
+        },
+        scales: { y: { beginAtZero:true } }
+    };
+
+    // Top Revenue Vehicles
+    new Chart(document.getElementById('topVehicleChart').getContext('2d'), {
+        type:'bar',
+        data:{ labels:{{ top_vehicle_labels|safe }}, datasets:[{ label:'Revenue (৳)', data:{{ top_vehicle_revenue|safe }}, backgroundColor:'#FF7F50' }] },
+        options: barOptions
+    });
+
+    // Top Vehicle Profit
+new Chart(document.getElementById('topVehicleProfitChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: {{ top_vehicle_profit_labels|safe }},
+        datasets: [{
+            label: 'Profit (৳)',
+            data: {{ top_vehicle_profit_values|safe }},
+            backgroundColor: '#28a745'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                color: 'white',
+                anchor: 'end', // default
+                align: function(context) {
+                    const value = context.dataset.data[context.dataIndex];
+                    return value < 50 ? 'end' : 'start'; // show inside bar if too small, above if large
+                },
+                offset: 4,
+                font: { weight: 'bold' },
+                formatter: function(value) {
+                    return '৳ ' + value.toLocaleString();  // formatted number
+                }
+            }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    },
+    plugins: [ChartDataLabels] // Make sure this plugin is included
+});
+
+
+    // Top Owner Profit
+    new Chart(document.getElementById('topOwnerProfitChart').getContext('2d'), {
+        type:'bar',
+        data:{ labels:{{ top_owner_labels|safe }}, datasets:[{ label:'Profit (৳)', data:{{ top_owner_profit|safe }}, backgroundColor:'#17a2b8' }] },
+        options: barOptions
+    });
+
+    // Daily Revenue, Cost & Profit
+new Chart(document.getElementById('dailyLineChart').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [
+            { label: 'Revenue', data: {{ chart_revenue|safe }}, borderColor: '#0c8bedff', backgroundColor: 'rgba(26,188,156,0.2)', fill: true, tension: 0.3 },
+            { label: 'Cost', data: {{ chart_cost|safe }}, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.2)', fill: true, tension: 0.3 },
+            { label: 'Profit', data: {{ chart_profit|safe }}, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.2)', fill: true, tension: 0.3 }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' },
+            datalabels: { display: false } // Disable values on points
+        },
+        scales: {
+            x: {
+                title: { display: true, text: 'Date' },
+                ticks: {
+                    callback: function(value, index, ticks) {
+                        const dt = new Date(this.getLabelForValue(value));
+                        const day = String(dt.getDate()).padStart(2,'0');
+                        const month = String(dt.getMonth()+1).padStart(2,'0');
+                        const year = dt.getFullYear();
+                        return `${day}-${month}-${year}`;
+                    }
+                }
+            },
+            y: { title: { display: true, text: 'Amount (৳)' }, beginAtZero: true }
+        }
+    }
+});
+
+
+
+    // Cost Breakdown (Doughnut)
+    new Chart(document.getElementById('costBreakdownChart').getContext('2d'), {
+        type:'doughnut',
+        data:{ labels:{{ cost_breakdown_labels|safe }}, datasets:[{ data:{{ cost_breakdown_values|safe }}, backgroundColor:['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#17a2b8','#28a745','#6c757d'] }] },
+        options:{ responsive:true, plugins:{ legend:{ position:'bottom' }, datalabels:{
+            color:'#fff', font:{ weight:'bold', size:12 }, formatter: (value) => '৳ '+value.toLocaleString()
+        }}}
+    });
+
+    
+</script>
+</body>
+</html>

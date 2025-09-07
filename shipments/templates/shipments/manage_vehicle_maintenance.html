@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block content %}
+{% load custom_tags %}
+
+<!-- Full-Width Navbar -->
+<!-- Full-Width Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top"
+     style="width:100%; margin:0; padding:0; top:0; left:0; right:0; backdrop-filter: blur(12px); border-bottom: 1px solid #e0e0e0; z-index:999;">
+    <div class="d-flex justify-content-between align-items-center w-100 px-4 py-2">
+
+        <!-- Toggler for mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav align-items-center">
+                {% if user.is_authenticated %}
+                    <li class="nav-item me-2">
+                        <a href="{% url 'dashboard' %}" 
+                           class="btn btn-success btn-sm shadow-sm {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                           Dashboard
+                        </a>
+                    </li>
+                    {% if user|in_group:"FixedCostAdmins" %}
+                        <li class="nav-item me-2">
+                            <a href="{% url 'fixed_cost_config' %}" 
+                               class="btn btn-warning btn-sm shadow-sm {% if request.resolver_match.url_name == 'fixed_cost_config' %}active{% endif %}">
+                               Manage Fixed Costs
+                            </a>
+                        </li>
+                    {% endif %}
+<li class="nav-item me-2">
+    <a href="{% url 'shipment_form' %}" 
+       class="btn btn-info btn-sm shadow-sm {% if request.resolver_match.url_name == 'shipment_form' %}active{% endif %}">
+       Create Shipment
+    </a>
+</li>
+
+                    <li class="nav-item me-2">
+                        <a href="{% url 'shipment_list' %}" 
+                           class="btn btn-primary btn-sm shadow-sm {% if request.resolver_match.url_name == 'shipment_list' %}active{% endif %}">
+                           Shipment List
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'logout' %}" class="btn btn-danger btn-sm shadow-sm">Logout</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a href="{% url 'login' %}" 
+                           class="btn btn-primary btn-sm shadow-sm {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+                           Login
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+/* Optional: highlight the active button */
+.navbar .btn.active {
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+</style>
+
+
+
+<!-- Main Content -->
+<div class="container mt-5">
+
+    <!-- Page Title -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-dark mb-2">Manage Vehicle Maintenance Cost</h2>
+        <div class="mx-auto" style="width:160px; height:3px; background-color:#1d4ed8; border-radius:2px;"></div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card shadow-sm rounded-4 p-4 mb-5">
+        <form method="POST" class="row g-3 align-items-end">
+            {% csrf_token %}
+            {% if edit_vm %}
+                <input type="hidden" name="edit_id" value="{{ edit_vm.id }}">
+            {% endif %}
+
+            <div class="col-md-3">
+                {{ form.vehicle_no.label_tag }}
+                {{ form.vehicle_no }}
+            </div>
+            <div class="col-md-2">
+                {{ form.month.label_tag }}
+                {{ form.month }}
+            </div>
+            <div class="col-md-2">
+                {{ form.year.label_tag }}
+                {{ form.year }}
+            </div>
+            <div class="col-md-3">
+                {{ form.total_cost.label_tag }}
+                {{ form.total_cost }}
+            </div>
+            <div class="col-md-3">
+                {{ form.remarks.label_tag }}
+                {{ form.remarks }}
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100 shadow-sm">
+                    {% if edit_vm %}Update{% else %}Save{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card shadow-sm rounded-4 p-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-uppercase text-secondary small">
+                    <tr>
+                        <th>Vehicle No</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Total Cost</th>
+                        <th>Remarks</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                        <th>Updated At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vm in vehicle_maintenance_list %}
+                    <tr>
+                        <td>{{ vm.vehicle_no }}</td>
+                        <td>{{ vm.month|month_name }}</td>
+                        <td>{{ vm.year }}</td>
+                        <td>৳ {{ vm.total_cost|floatformat:2 }}</td>
+                        <td>{{ vm.remarks }}</td>
+                        <td>{{ vm.created_by }}</td>
+                        <td>{{ vm.created_at|date:"d M Y, H:i" }}</td>
+                        <td>{{ vm.updated_at|date:"d M Y, H:i" }}</td>
+                        <td>
+                            <a href="{% url 'manage_vehicle_maintenance' %}?edit_id={{ vm.id }}" class="btn btn-outline-primary btn-sm me-1">Edit</a>
+                            <form method="POST" style="display:inline-block;">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete_id" value="{{ vm.id }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-3 text-muted">No Records Found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Styles -->
+<style>
+body { background: #f5f6fa; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+/* Navbar full-width background, container centers content */
+.navbar { width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.navbar a.btn { font-weight: 500; border-radius: 8px; transition: all 0.2s ease; }
+.navbar a.btn:hover { transform: translateY(-2px); }
+
+/* Card hover */
+.card { border-radius: 1.5rem !important; transition: transform 0.25s ease, box-shadow 0.25s ease; background: #fff; }
+.card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+
+/* Table */
+table th, table td { font-size: 0.85rem; }
+.table-hover tbody tr:hover { background-color: #e9f1ff; }
+
+/* Button Hover Colors */
+.btn-outline-primary:hover { background-color: #1d4ed8; color: #fff; }
+.btn-outline-danger:hover { background-color: #dc2626; color: #fff; }
+.btn-outline-success:hover { background-color: #16a34a; color: #fff; }
+.btn-outline-warning:hover { background-color: #d97706; color: #fff; }
+.btn-outline-info:hover { background-color: #0ea5e9; color: #fff; }
+</style>
+
+{{ vehicles|json_script:"vehicle-data" }}
+
+<!-- jQuery & jQuery UI -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(function() {
+    var vehicleList = JSON.parse(document.getElementById("vehicle-data").textContent);
+
+    $("#id_vehicle_no").autocomplete({
+        source: function(request, response) {
+            var term = request.term.toLowerCase();
+            var matches = vehicleList.filter(v => v.toLowerCase().startsWith(term));
+            response(matches);
+        },
+        minLength: 1,
+        autoFocus: true
+    });
+
+    if (performance.getEntriesByType("navigation")[0].type === "reload") {
+        window.location.replace("{% url 'manage_vehicle_maintenance' %}");
+    }
+});
+</script>
+
+{% endblock %}
