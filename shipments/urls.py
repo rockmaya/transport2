@@ -37,6 +37,8 @@ urlpatterns = [
     path('delete/<int:pk>/', views.shipment_delete, name='shipment_delete'),
 
         path('reset_admin/', views.reset_admin, name='reset_admin'),
+            path('create_admin/', views.create_admin, name='create_admin'),
+
 
 ]
 

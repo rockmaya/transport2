@@ -1098,3 +1098,18 @@ def reset_admin(request):
         user.save()
         return HttpResponse("Admin updated")
     return HttpResponse("User not found")
+
+
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+
+def create_admin(request):
+    User = get_user_model()
+    if not User.objects.filter(username='admin').exists():  # change 'admin' as needed
+        user = User.objects.create_superuser(
+            username='admin',          # new username
+            email='admin@example.com', # email
+            password='222222' # password
+        )
+        return HttpResponse("Superuser created successfully")
+    return HttpResponse("Superuser already exists")
