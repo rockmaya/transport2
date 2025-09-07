@@ -152,16 +152,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #     }
 # }
 
-import os
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///db.sqlite3',  # fallback if DATABASE_URL not set
-        conn_max_age=600,                # optional: persistent connections
-        ssl_require=True                 # use SSL in production
-    )
+    "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
 }
+
 
 
 # Password validation
