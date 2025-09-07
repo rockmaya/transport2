@@ -153,15 +153,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'trip_db_gzkv',
+#         'USER': 'selim',
+#         'PASSWORD': '2MeTrSUZ3Ez1thoX7dAnTcTdIjHtcMqO',
+#         'HOST': 'dpg-d2utol6r433s73em921g-a',
+#         'PORT': '5432',
+#     }
+# }
+
+import dj_database_url
+import os
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'trip_db_gzkv',
-        'USER': 'selim',
-        'PASSWORD': '2MeTrSUZ3Ez1thoX7dAnTcTdIjHtcMqO',
-        'HOST': 'dpg-d2utol6r433s73em921g-a',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.parse(os.environ.get('postgresql://selim:2MeTrSUZ3Ez1thoX7dAnTcTdIjHtcMqO@dpg-d2utol6r433s73em921g-a/trip_db_gzkv'))
 }
 
 
