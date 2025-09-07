@@ -34,7 +34,7 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 import os
 
-DEBUG = int(os.environ.get("DEBUG", default=1))
+DEBUG = True
 
 
 
