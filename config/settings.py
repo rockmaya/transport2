@@ -156,10 +156,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'transport_db_btcv',
-        'USER': 'transport_db_btcv_user',
-        'PASSWORD': '5PiLv1ljxkTjMlu1WE2wo4n07Evz0Ebj',
-        'HOST': 'dpg-d2ustvndiees739b7s70-a',
+        'NAME': 'trip_db_gzkv',
+        'USER': 'selim',
+        'PASSWORD': '2MeTrSUZ3Ez1thoX7dAnTcTdIjHtcMqO',
+        'HOST': 'dpg-d2utol6r433s73em921g-a',
         'PORT': '5432',
     }
 }
