@@ -40,7 +40,8 @@ DEBUG = int(os.environ.get("DEBUG", default=1))
 
 import os
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = ['supertransport-acpn.onrender.com']
+
 
 
 
